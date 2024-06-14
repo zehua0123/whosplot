@@ -22,12 +22,12 @@
 # SOFTWARE.
 
 __title__ = "whosplot"
-__description__ = "scientific plot style for Researchers."
-__version__ = "0.0.2"
+__description__ = "Scientific plot style for Researchers."
+__version__ = "1.0.0"
 __build__ = 0x022801
 __author__ = "Hu, Zehua"
 __author_email__ = "merlinihu0828@gmail.com"
 __license__ = "The MIT License"
-__copyright__ = "Copyright(c) 2023 Hu Zehua"
+__copyright__ = "Copyright(c) 2024 Hu Zehua"
 __cake__ = "\u2728 \U0001f370 \u2728"
 

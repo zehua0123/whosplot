@@ -31,15 +31,25 @@ class BasicCsv:
         pass
 
     @classmethod
-    def numpy_save_data(cls, file_path: str, data, header: list):
+    def numpy_save_data(cls, file_path: str, data, header: list) -> None:
         """
         Save the data into a numpy array.
-        :return: column
+        
+        :param file_path: Path to the file where data will be saved.
+        :param data: Data array to save.
+        :param header: List of header strings.
         """
         np.savetxt(fname=file_path, X=data, fmt='%.12f', delimiter=',', header=','.join(header), comments='')
 
     @classmethod
-    def numpy_load_data(cls, file_path: str, skiprows: int = 0):
+    def numpy_load_data(cls, file_path: str, skiprows: int = 0) -> np.ndarray:
+        """
+        Load data from a CSV file into a numpy array.
+        
+        :param file_path: Path to the CSV file.
+        :param skiprows: Number of rows to skip at the beginning of the file.
+        :return: Numpy array containing the loaded data.
+        """
         numpy_data = np.loadtxt(fname=file_path,
                                 dtype=np.float64,
                                 encoding='utf-8-sig',
@@ -67,97 +77,84 @@ class CsvReader(Abstract):
         self.__load_data()
 
     def __set_file_location(self) -> None:
-        """
-        Get the file path of the csv file.
-        :return: file path
-        """
+        """Set the file location of the CSV file."""
         self.__file_location = self.__Parameter.__getattr__('file_location')
 
     def __set_cols_and_rows(self) -> None:
-        """
-        Get the cols and rows of the csv file.
-        :return: cols and rows
-        """
+        """Set the columns and rows of the CSV file."""
         self.__cols = self.__Parameter.__getattr__('cols')
         self.__rows = self.__Parameter.__getattr__('rows')
 
     def __set_figure_kind(self) -> None:
-        """
-        Get the figure kind of the csv file.
-        :return: figure kind
-        """
+        """Set the figure kind of the CSV file."""
         self.__figure_kind = self.__Parameter.__getattr__('figure_kind')
 
     def __set_mixed_ylegend(self) -> None:
-        """
-        Get the mixed ylegend of the csv file.
-        :return: mixed ylegend
-        """
+        """Set the mixed ylegend of the CSV file."""
         self.__mixed_ylegend = self.__Parameter.__getattr__('mixed_ylegend')
 
     def __set_limited_label(self) -> None:
-        """
-        Get the limited label of the csv file.
-        :return: limited label
-        """
+        """Set the limited label of the CSV file."""
         self.__limited_label = self.__Parameter.__getattr__('limited_label')
 
     @classmethod
     def __extract_label(cls, header: list) -> list:
         """
-        Extract the label from the csv header.
-        :param header: csv header
-        :return: label
+        Extract labels from the CSV header.
+        
+        :param header: CSV header.
+        :return: List of extracted labels.
         """
-
-        labels = [x for x in header if x.split('::').__len__() > 1]
-        return labels
-
+        return [x for x in header if len(x.split('::')) > 1]
+    
     @classmethod
-    def __insert_whos_plot(cls, list_: list):
+    def __insert_whos_plot(cls, list_: list) -> list:
         """
-        Insert the whos_plot into the list.
-        :param list_:
-        :return:
+        Insert 'whos_plot' into the list at specified intervals.
+        
+        :param list_: Input list.
+        :return: Modified list with 'whos_plot' inserted.
         """
         list_new = list_
         for num in range(len(list_new)):
             if 'whos_plot' in list_new[num]:
-                for num_ in range(0, 100, 2):
-                    if num_ < len(list_new[num]) and 'whos_plot' not in list_new[num][num_] and num_ != 0:
-                        list_new[num].insert(num_, 'whos_plot')
-                    elif num_ >= len(list_new[num]):
-                        break
+                cls.__insert_whos_plot_helper(list_new, num)
             elif 'whos_plot' not in list_new[num]:
-                for num_ in range(0, 100, 2):
-                    if num_ < len(list_new[num]) and num_ != 0:
-                        list_new[num].insert(num_, 'whos_plot')
-                    elif num_ >= len(list_new[num]):
-                        break
+                cls.__insert_whos_plot_helper(list_new, num)
         return list_new
+
+    @staticmethod
+    def __insert_whos_plot_helper(list_, num):
+        for num_ in range(0, 100, 2):
+            if num_ < len(list_[num]) and 'whos_plot' not in list_[num][num_] and num_ != 0:
+                list_[num].insert(num_, 'whos_plot')
+            elif num_ >= len(list_[num]):
+                break
 
     @classmethod
     def __split_header_from_data(cls, rows: list) -> tuple:
         """
-        Create the empty columns for an unreadable data file.
-        :return: column
+        Split the header from the data rows.
+        
+        :param rows: List of rows.
+        :return: Tuple containing the header and data rows.
         """
         return rows[0], rows[1:]
 
     @classmethod
     def __replace_empty_data(cls, rows: list) -> list:
         """
-        Fill the empty columns.
-        :return: column
+        Replace empty cells in the data rows.
+        
+        :param rows: List of rows.
+        :return: List of rows with empty cells replaced.
         """
         for row_num in range(len(rows)):
             for column_num in range(len(rows[row_num])):
                 if rows[row_num][column_num] == '':
                     rows[row_num][column_num] = rows[row_num - 1][column_num]
-
                 else:
                     rows[row_num][column_num] = float(rows[row_num][column_num])
-
         return rows
 
     @classmethod
@@ -173,45 +170,53 @@ class CsvReader(Abstract):
     @classmethod
     def __insert_x_data(cls, data: np.ndarray, legend: list, header: list) -> np.ndarray:
         """
-        Split the data into several parts.
-        :return: data_list
+        Insert X data into the array.
+
+        :param data: Data array.
+        :param legend: List of legend strings.
+        :param header: List of header strings.
+        :return: Modified data array with inserted X data.
         """
-        flag = True
+        columns = len(legend)
+        if columns == 2:
+            return data
+
+        data_array = np.zeros((data.shape[0], columns))
         start_num = 0
-        columns_ = len(legend)
-        if columns_ == 2:
-            data_array = data
-            return data_array
-        else:
-            data_array = np.zeros((data.shape[0], columns_))
-            while flag:
-                for num in range(start_num, columns_):
-                    if legend[num] == header[num] and num != columns_ - 1:
-                        data_array[:, num] = data[:, num]
-                    elif legend[num] != header[num] and num != columns_ - 1:
-                        header.insert(num, legend[num])
-                        data = np.insert(data, num, data[:, num - 2], axis=1)
-                        data_array[:, num] = data[:, num]
-                        start_num = num + 1
-                        break
-                    elif legend[num] == header[num] and num == columns_ - 1:
-                        data_array[:, num] = data[:, num]
-                        flag = False
+        flag = True
+
+        while flag:
+            for num in range(start_num, columns):
+                if legend[num] == header[num] and num != columns - 1:
+                    data_array[:, num] = data[:, num]
+                elif legend[num] != header[num] and num != columns - 1:
+                    header.insert(num, legend[num])
+                    data = np.insert(data, num, data[:, num - 2], axis=1)
+                    data_array[:, num] = data[:, num]
+                    start_num = num + 1
+                    break
+                elif legend[num] == header[num] and num == columns - 1:
+                    data_array[:, num] = data[:, num]
+                    flag = False
+
         return data_array
 
     @classmethod
-    def __split_data_array(cls, data: np.ndarray or list, label_position: list) -> list:
+    def __split_data_array(cls, data: np.ndarray, label_position: list) -> list:
         """
-        Split the data into several parts.
-        :return: data_list
+        Split the data array into several parts based on label positions.
+
+        :param data: Input data array or list.
+        :param label_position: List of label positions.
+        :return: List of split data arrays.
         """
         data_list = []
 
-        if label_position.__len__() == 1:
+        if len(label_position) == 1:
             data_list.append(data)
             return data_list
 
-        elif label_position.__len__() > 1 and type(data) == np.ndarray:
+        if isinstance(data, np.ndarray):
             for num in range(len(label_position)):
                 if num == 0:
                     data_list.append(data[:, :label_position[num + 1]])
@@ -219,8 +224,7 @@ class CsvReader(Abstract):
                     data_list.append(data[:, label_position[num]:label_position[num + 1]])
                 elif num == len(label_position) - 1:
                     data_list.append(data[:, label_position[num]:])
-            return data_list
-        elif label_position.__len__() > 1 and type(data) == list:
+        elif isinstance(data, list):
             for num in range(len(label_position)):
                 if num == 0:
                     data_list.append(data[:label_position[num + 1]])
@@ -228,12 +232,22 @@ class CsvReader(Abstract):
                     data_list.append(data[label_position[num]:label_position[num + 1]])
                 elif num == len(label_position) - 1:
                     data_list.append(data[label_position[num]:])
-            return data_list
+
+        return data_list
+
+    def __set_language(self) -> None:
+        """Set the language based on the content of the header."""
+        language = self.__get_language()
+        if language in ['chinese', 'english']:
+            self.language = language
+        else:
+            raise ValueError("Language is not valid")
 
     def __get_language(self) -> str:
         """
-        Get the language from the command line arguments.
-        :return: language
+        Detect the language from the header.
+
+        :return: Detected language ('chinese' or 'english').
         """
         for word in self.header:
             for character in word:
@@ -241,50 +255,31 @@ class CsvReader(Abstract):
                     return 'chinese'
         return 'english'
 
-    def __set_language(self) -> int:
-        """
-        Set the language.
-        :return:
-        """
-        if self.__get_language() == 'chinese':
-            self.language = 'chinese'
-            return 0
-        elif self.__get_language() == 'english':
-            self.language = 'english'
-            return 0
-        else:
-            raise ValueError("language is not valid")
-
     def __get_label_position(self) -> list:
         """
-        Get the label position.
-        :return: label_position
-        """
-        return [count for count in range(len(self.header)) if self.header[count].split('::').__len__() > 1]
+        Get the positions of labels in the header.
 
-    def __set_label_position(self):
+        :return: List of label positions.
         """
-        Set the label position.
-        :return: 0
-        """
+        return [count for count in range(len(self.header)) if len(self.header[count].split('::')) > 1]
+
+    def __set_label_position(self) -> None:
+        """Set the label positions in the class attribute."""
         self.__label_position = self.__get_label_position()
 
-    def __set_kind_index(self):
-        """
-        Set the mixed ylegend.
-        :return: 0
-        """
+    def __set_kind_index(self) -> None:
+        """Set the index for different figure kinds."""
         self.kind_index = {}
-        figure_number = int(self.__cols * self.__rows)
+        figure_number = self.__cols * self.__rows
         legend_len_list = self.legend_len_list
+
         for num in range(figure_number):
             if self.__figure_kind[num] == 'scatter':
                 self.kind_index[num] = [x for x in range(legend_len_list[num] * 2)]
             elif self.__figure_kind[num] == 'plot':
                 self.kind_index[num] = []
             elif self.__figure_kind[num] == 'mix':
-                scatter_index = self.__mixed_ylegend[num]
-                self.kind_index[num] = scatter_index
+                self.kind_index[num] = self.__mixed_ylegend[num]
 
     def __get_csv_header(self) -> list:
         """
@@ -394,46 +389,37 @@ class CsvReader(Abstract):
 
     def __standardize_csv_array(self) -> np.ndarray:
         """
-        Standardize the data array shape.
-        :return: data_load
-        """
-        check_data_array_shape = self.__check_data_array_shape()
+        Standardize the CSV array by filling empty cells.
 
-        if check_data_array_shape == 1:
+        :return: Standardized numpy array.
+        """
+        if self.__check_data_array_shape() == 1:
             rows = self.__csv_get_data_in_row()
             header, data = self.__split_header_from_data(rows)
             new_rows = self.__replace_empty_data(data)
             stack_list = [np.array(value).flatten() for value in new_rows]
             csv_array = np.column_stack(stack_list).T
-            # self.__numpy_save_data(self.file_location.replace('.csv', ''), csv_array, header)
             return csv_array
 
-        elif check_data_array_shape == 0:
-            csv_array = self.__numpy_get_data()
-            return csv_array
+        return self.__numpy_get_data()
 
     def __standardize_data_array(self) -> list:
         """
-        Standardize the data.
-        :return: data_list
+        Standardize the data array.
+
+        :return: List of standardized data arrays.
         """
         csv_array = self.__standardize_csv_array()
         legend = self.legend
         header = self.__split_data_array(self.header, self.__label_position)
         data_list_ = self.__split_data_array(csv_array, self.__label_position)
-        data_list = [self.__insert_x_data(data=data_list_[num],
-                                          legend=legend[num],
-                                          header=header[num])
+        data_list = [self.__insert_x_data(data_list_[num], legend[num], header[num])
                      for num in range(len(data_list_))]
         return data_list
 
-    def __set_data(self) -> int:
-        """
-        Set the csv data.
-        :return: 0
-        """
+    def __set_data(self) -> None:
+        """Set the CSV data."""
         self.data = self.__standardize_data_array()
-        return 0
 
     def __load_data(self):
         """
@@ -824,7 +810,7 @@ class OfPostProcess(BasicCsv):
             reader = f.read()
             return reader
 
-    def of_cases_sort(self, file_name_dict: {str: {str: callable}}):
+    def of_cases_sort(self, file_name_dict):
         dic = {}
         file_path = self.__get_zero_folder_path(self.folder_path, self.file_name)
         for cpp_file in file_path:

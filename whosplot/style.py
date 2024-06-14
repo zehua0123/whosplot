@@ -394,7 +394,7 @@ class Style(Abstract):
         # avant garde, courier, monospace, computer modern roman, computer modern sans serif,
         # computer modern typewriter.
         
-        self.plt.rcParams['text.latex.preamble'] = r'\usepackage{newtxtext,newtxmath}'
+        self.plt.rcParams['text.latex.preamble'] = r'\usepackage{newtxtext, newtxmath}'
         # self.plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 
         # Preamble to pass to latex when rendering text with latex. The string should contain valid LaTeX code.

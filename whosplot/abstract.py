@@ -37,71 +37,82 @@ used.
 
 """
 class Abstract(object):
+    """
+    A class to represent abstract information about the program.
+    
+    Attributes:
+    ----------
+    config_path : str
+        The absolute path to the configuration file.
 
+    Methods:
+    -------
+    __getattr__(self, item):
+        Gets the attribute of the class.
+    __setattr__(self, key, value):
+        Sets the attribute of the class.
+    version(cls):
+        Prints the version of the program.
+    author(cls):
+        Prints the author of the program.
+    author_email(cls):
+        Prints the author's email.
+    license(cls):
+        Prints the license of the program.
+    copyright(cls):
+        Prints the copyright information.
+    cake(cls):
+        Prints the cake information.
+    """
+    
     def __init__(self):
         self.config_path = os.path.abspath('config.ini')
 
     def __getattr__(self, item):
         """
         Get the attribute of the class.
-        :param item:
-        :return:
+        :param item: Attribute name
+        :return: Attribute value
         """
-        return self.__dict__[item]
+        try:
+            return self.__dict__[item]
+        except KeyError:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def __setattr__(self, key, value):
         """
         Set the attribute of the class.
-        :param key:
-        :param value:
-        :return:
+        :param key: Attribute name
+        :param value: Attribute value
         """
-        self.__dict__[key] = value
+        super().__setattr__(key, value)
 
     @classmethod
-    def __version__(cls):
-        """
-        Print the version of the program.
-        :return:
-        """
+    def version(cls):
+        """Print the version of the program."""
         print(__version__)
 
     @classmethod
-    def __author__(cls):
-        """
-        Print the author of the program.
-        :return:
-        """
+    def author(cls):
+        """Print the author of the program."""
         print(__author__)
 
     @classmethod
-    def __author_email__(cls):
-        """
-        Print the author email of the program.
-        :return:
-        """
+    def author_email(cls):
+        """Print the author's email."""
         print(__author_email__)
 
     @classmethod
-    def __license__(cls):
-        """
-        Print the license of the program.
-        :return:
-        """
+    def license(cls):
+        """Print the license of the program."""
         print(__license__)
 
     @classmethod
-    def __copyright__(cls):
-        """
-        Print the copyright of the program.
-        :return:
-        """
+    def copyright(cls):
+        """Print the copyright information."""
         print(__copyright__)
 
     @classmethod
-    def __cake__(cls):
-        """
-        Print the cake of the program.
-        :return:
-        """
+    def cake(cls):
+        """Print the cake information."""
         print(__cake__)
