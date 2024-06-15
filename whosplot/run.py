@@ -10,6 +10,34 @@ import os
 
 
 class Run(Abstract):
+    """
+    A class to handle the execution and plotting of CSV data.
+
+    Attributes:
+    ----------
+    axs : matplotlib.axes._axes.Axes
+        Array of subplot axes.
+    fig : matplotlib.figure.Figure
+        Figure object for plotting.
+    plt : module
+        Matplotlib.pyplot module.
+
+    Methods:
+    -------
+    save_fig(fig_format='jpg')
+        Save the generated figure in the specified format.
+    show(fig_format='jpg')
+        Display the saved figure file.
+    text(text, xypos, horizontalalignment='center', verticalalignment='center', fontsize=18)
+        Annotate text on the plot.
+    set_axis_off()
+        Turn off the axis of the plot.
+    two_d_subplots()
+        Create 2D subplots for the data.
+    color_gradient_two_d_subplots()
+        Create 2D subplots with color gradients.
+    """
+
     def __init__(self):
         super(Run, self).__init__()
         self.__Parameter = Parameter()
@@ -198,6 +226,15 @@ class Run(Abstract):
         cbar.ax.tick_params(direction='out', length=2, width=0.5, labelsize=12, pad=1)
 
     def text(self, text, xypos, horizontalalignment='center', verticalalignment='center', fontsize=18):
+        """
+        Annotate text on the plot.
+
+        :param text: List of text annotations.
+        :param xypos: Tuple of x and y positions.
+        :param horizontalalignment: Horizontal alignment of text (default is 'center').
+        :param verticalalignment: Vertical alignment of text (default is 'center').
+        :param fontsize: Font size of text (default is 18).
+        """
         for fig_num in range(self.__figure_number):
             self.axs[
                 int(fig_num // self.__cols), int(fig_num % self.__cols)].annotate(
@@ -211,6 +248,7 @@ class Run(Abstract):
                 size=fontsize)
 
     def set_axis_off(self):
+        """Turn off the axis of the plot."""
         for fig_num in range(self.__figure_number):
             self.axs[int(fig_num // self.__cols), int(fig_num % self.__cols)].set_axis_off()
 
@@ -266,6 +304,7 @@ class Run(Abstract):
         return color_gradient
 
     def two_d_subplots(self):
+        """Create 2D subplots for the data."""
         color_gradient = self.__color_gradient()
         color_array = self.__color_map_array(color_gradient)
         for fig_num in range(self.__figure_number):
@@ -284,6 +323,7 @@ class Run(Abstract):
         self.__set_axis_style()
 
     def color_gradient_two_d_subplots(self):
+        """Create 2D subplots with color gradients."""
         color_gradient = self.__color_gradient(switch=True)
         color_array = self.__color_map_array(color_gradient)
 
@@ -305,3 +345,63 @@ class Run(Abstract):
                     self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
 
         self.__set_axis_style()
+
+    # def filling_two_d_subplots(self):
+    #     """Create 2D subplots with filling."""
+    #     color_gradient = self.__color_gradient()
+    #     color_array = self.__color_map_array(color_gradient)
+    #     for fig_num in range(self.__figure_number):
+    #         legend_len = self.__legend_len_list[fig_num]
+    #         scatter_index = self.__kind_index[fig_num]
+    #         for line_num in range(legend_len):
+    #             if int((line_num * 2) + 1) not in scatter_index:
+    #                 self.__plot(fig_num, line_num, color_array)
+
+    #             else:
+    #                 self.__scatter(fig_num, line_num, color_array)
+
+    #             if self.__figure_number > 1:
+    #                 self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
+
+    # def draw_igd(self):
+
+    #     x_data = np.loadtxt(r'.\igd-ave.csv', delimiter=',', dtype=np.float64, encoding='utf-8', usecols=0)
+    #     ave_data = np.loadtxt(r'.\igd-ave.csv', delimiter=',', dtype=np.float64, encoding='utf-8',usecols=(1, 2, 3, 4, 5, 6))
+    #     sigma_data = np.loadtxt(r'.\igd-sigma.csv', delimiter=',', dtype=np.float64, encoding='utf-8',usecols=(1, 2, 3, 4, 5, 6))
+    #     ave_all = [np.average(num) for num in ave_data]
+    #     lis = ['MOEAD',  'MOEAD-DE',  'NSGA-II','NSGA-II-DE', 'NSGA-III', 'NSGA-III-DE']
+    #     lis_abc = ['a','b','c','d','e','f']
+    #     fig, axs = plt.subplots(3, 2, figsize=(18, 18))
+    #     for num in range(6):
+    #         upper_bound = ave_data[:, num] + sigma_data[:, num]
+    #         lower_bound = ave_data[:, num] - sigma_data[:, num]
+    #         axs[int(num//2), int(num % 2)].plot(x_data, ave_data[:, num], lw=2, label=lis[num])
+    #         axs[int(num//2), int(num % 2)].plot(x_data, ave_all, lw=1.5, label='Mean', color='C0', ls='--',dashes=(6,4))
+    #         axs[int(num//2), int(num % 2)].fill_between(x_data, lower_bound, upper_bound, facecolor='C0', alpha=0.4, label=r'$\rm\mp\sigma$ range')
+    #         axs[int(num//2), int(num % 2)].legend(loc='upper right', frameon=False)
+    #         # axs[int(num//2), int(num % 2)].fill_between(x_data, upper_bound, ave_all, where=ave_all > upper_bound, fc='red', alpha=0.4)
+    #         # axs[int(num//2), int(num % 2)].fill_between(x_data, lower_bound, ave_all, where=ave_all < lower_bound, fc='red', alpha=0.4)
+    #         axs[int(num//2), int(num % 2)].set_xlabel('Generation')
+
+    #         axs[int(num//2), int(num % 2)].set_ylabel('Indicator generational distance')
+    #         axs[int(num//2), int(num % 2)].annotate('({})'.format(lis_abc[num]),xy=(0.08, 0.93), xycoords='axes fraction',xytext=(0,0), textcoords='offset pixels',
+    #         horizontalalignment='right',verticalalignment='top',size=18)
+    #         axs[int(num//2), int(num % 2)].set_xlim(0,100)
+
+
+
+    def pie_chart(self):
+        pass
+
+    def histogram(self):
+        pass
+
+    def box_plot(self):
+        pass
+
+    def violin_plot(self):
+        pass
+
+
+    
+    
