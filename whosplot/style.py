@@ -517,55 +517,36 @@ class Style(Abstract):
             if len(self.__limited_label[fignum]) != 4 and len(self.__limited_label[fignum]) != 6:
                 raise ValueError('The limited label size is wrong!')
 
-    def __legend(self):
+    def __legend(self, **kwargs):
         """
         Set the legend.
         :return
         """
-        for num in range(self.__figure_number):
-            if self.__legend_len_list[num] == 1:
-                return 0
 
-            if self.__label_len_list[num] == 2:
+        for num in range(self.__figure_number):
+            # Handle custom legends if provided
+            if kwargs.get('extra_legend') is not None:
+                arg_list = kwargs['extra_legend'][num]
+                legend_new = self.__legend_[num] + \
+                    [item for sublist in [arg_list[i:i+2] for i in range(0, len(arg_list), 4)] for item in sublist]
+                legend_items = legend_new[1::2]
+            else:
+                # Default handling when no extra_legend is provided
+                if self.__legend_len_list[num] == 1:
+                    return 0  # Assuming the function should terminate early in this case
+                legend_items = self.__legend_[num][1::2]
+
+            # Configure the legend based on the label length
+            if self.__label_len_list[num] != 3:
                 labels = self.axs[int(num // self.__cols), int(num % self.__cols)].legend(
-                    self.__legend_[num][1::2],
+                    legend_items,
                     loc=self.__legend_location[num],
                     frameon=False,
                     fontsize=14).get_texts()
                 if self.__language == 'chinese':
-                    [label.set_fontname('SimSun') for label in labels]
-
-            elif self.__label_len_list[num] == 3:
-                # self.axs[int(num // self.__cols), int(num % self.__cols)].legend(
-                #     self.legend[num][1],
-                #     loc=self.__legend_location[num],
-                #     frameon=False,
-                #     fontsize=14)
-
-                # legend_side_index = [self.legend[num].index(side) for side in self.side_ylabel[num]]
-                # legend_main_index = [x for x in range(1, len(self.legend[num]), 2) if x not in legend_side_index]
-                # legend_main = [self.legend[num][x] for x in legend_main_index]
-                # legend_side = [self.legend[num][x] for x in legend_side_index]
-                #
-                # labels0 = self.axs[int(num // self.__cols), int(num % self.__cols)].legend(
-                #     legend_main,
-                #     loc=self.__legend_location[num],
-                #     frameon=False,
-                #     fontsize=14).get_texts()
-                # if self.__language == 'chinese':
-                #     [label.set_fontname('SimSun') for label in labels0]
-                #
-                # labels1 = self.ax0.legend(
-                #     legend_side,
-                #     loc=1,
-                #     frameon=False,
-                #     fontsize=14).get_texts()
-                #
-                # if self.__language == 'chinese':
-                #     [label.set_fontname('SimSun') for label in labels1]
-                #
-                # if num != 0:
-                #     raise ValueError('The legend size is wrong!')
+                    for label in labels:
+                        label.set_fontname('SimSun')
+            else:
                 raise ValueError('Side ylabel is not supported now!')
 
     def __label(self):
@@ -697,12 +678,12 @@ class Style(Abstract):
             color_map_array_ = plt.get_cmap(self.__color_map_[num]).colors
             self.color_map_array.append(np.array(color_map_array_))
 
-    def set_axis_style(self):
+    def set_axis_style(self, **kwargs):
         self.__label_type()
         self.__ticklabel_format()
         self.__title()
         self.__label_limitation()
-        self.__legend()
+        self.__legend(extra_legend=kwargs.get('extra_legend', None))
         self.__label()
 
     def __set_content_style(self):

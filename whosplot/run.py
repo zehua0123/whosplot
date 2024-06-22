@@ -120,12 +120,12 @@ class Run(Abstract):
         """
         self.__color_map_array_ = self.__Style.__getattr__('color_map_array')
 
-    def __set_axis_style(self):
+    def __set_axis_style(self, **kwargs):
         """
         Set the axis style of the csv file.
         :return: None
         """
-        self.__Style.set_axis_style()
+        self.__Style.set_axis_style(**kwargs)
 
     def __set_line_style(self):
         """
@@ -346,26 +346,30 @@ class Run(Abstract):
 
         self.__set_axis_style()
 
-    def __filling(self, filling_data, fig_num, line_num, color_array):
-        
-        self.axs[
-            int(fig_num // self.__cols), int(fig_num % self.__cols)
-        ].fill_between(
-            filling_data[fig_num][:, line_num * 2],
-            filling_data[fig_num][:, int(line_num * 2 + 1)],
-            color=color_array[fig_num, line_num],
-            alpha=0.5,
-            zorder=100
-        )
+    def __filling(self, filling_data, label_list, fig_num, color_array):
+        number = filling_data[fig_num].shape[1] / 4
 
-    def filling_two_d_subplots(self, filling_data):
+        for i in range(int(number)):
+            self.axs[
+                int(fig_num // self.__cols), int(fig_num % self.__cols)
+            ].fill_between(
+                x = filling_data[fig_num][:, i * 4],
+                y1 = filling_data[fig_num][:, int(i * 4 + 1)],
+                y2 = filling_data[fig_num][:, int(i * 4 + 3)],
+                color=color_array[fig_num, i],
+                alpha=0.5,
+                zorder=0,
+                linewidth=0,
+                label=label_list[fig_num][i]
+            )
+
+    def filling_two_d_subplots(self, filling_data, label_list):
         """Create 2D subplots with filling."""
         color_gradient = self.__color_gradient()
         color_array = self.__color_map_array(color_gradient)
         for fig_num in range(self.__figure_number):
             legend_len = self.__legend_len_list[fig_num]
             scatter_index = self.__kind_index[fig_num]
-            self.__filling(filling_data)
             for line_num in range(legend_len):
                 if int((line_num * 2) + 1) not in scatter_index:
                     self.__plot(fig_num, line_num, color_array)
@@ -376,34 +380,9 @@ class Run(Abstract):
                 if self.__figure_number > 1:
                     self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
 
-        self.__set_axis_style()
+            self.__filling(filling_data, label_list, fig_num, color_array)
 
-    # def draw_igd(self):
-
-    #     x_data = np.loadtxt(r'.\igd-ave.csv', delimiter=',', dtype=np.float64, encoding='utf-8', usecols=0)
-    #     ave_data = np.loadtxt(r'.\igd-ave.csv', delimiter=',', dtype=np.float64, encoding='utf-8',usecols=(1, 2, 3, 4, 5, 6))
-    #     sigma_data = np.loadtxt(r'.\igd-sigma.csv', delimiter=',', dtype=np.float64, encoding='utf-8',usecols=(1, 2, 3, 4, 5, 6))
-    #     ave_all = [np.average(num) for num in ave_data]
-    #     lis = ['MOEAD',  'MOEAD-DE',  'NSGA-II','NSGA-II-DE', 'NSGA-III', 'NSGA-III-DE']
-    #     lis_abc = ['a','b','c','d','e','f']
-    #     fig, axs = plt.subplots(3, 2, figsize=(18, 18))
-    #     for num in range(6):
-    #         upper_bound = ave_data[:, num] + sigma_data[:, num]
-    #         lower_bound = ave_data[:, num] - sigma_data[:, num]
-    #         axs[int(num//2), int(num % 2)].plot(x_data, ave_data[:, num], lw=2, label=lis[num])
-    #         axs[int(num//2), int(num % 2)].plot(x_data, ave_all, lw=1.5, label='Mean', color='C0', ls='--',dashes=(6,4))
-    #         axs[int(num//2), int(num % 2)].fill_between(x_data, lower_bound, upper_bound, facecolor='C0', alpha=0.4, label=r'$\rm\mp\sigma$ range')
-    #         axs[int(num//2), int(num % 2)].legend(loc='upper right', frameon=False)
-    #         # axs[int(num//2), int(num % 2)].fill_between(x_data, upper_bound, ave_all, where=ave_all > upper_bound, fc='red', alpha=0.4)
-    #         # axs[int(num//2), int(num % 2)].fill_between(x_data, lower_bound, ave_all, where=ave_all < lower_bound, fc='red', alpha=0.4)
-    #         axs[int(num//2), int(num % 2)].set_xlabel('Generation')
-
-    #         axs[int(num//2), int(num % 2)].set_ylabel('Indicator generational distance')
-    #         axs[int(num//2), int(num % 2)].annotate('({})'.format(lis_abc[num]),xy=(0.08, 0.93), xycoords='axes fraction',xytext=(0,0), textcoords='offset pixels',
-    #         horizontalalignment='right',verticalalignment='top',size=18)
-    #         axs[int(num//2), int(num % 2)].set_xlim(0,100)
-
-
+        self.__set_axis_style(extra_legend=label_list)
 
     def pie_chart(self):
         pass

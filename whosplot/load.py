@@ -66,9 +66,15 @@ class CsvReader(Abstract):
     The only required formulation is label, that must be setted as x_label::y1_label::y2_label ...
     """
 
-    def __init__(self):
+    def __init__(self, key=None):
         super(CsvReader, self).__init__()
         self.__Parameter = Parameter()
+
+        if key:
+            file_location = self.__Parameter.__getattr__('file_location')
+            file_name = self.__Parameter.__getattr__('file_name')
+            self.__Parameter.__setattr__('file_location', file_location.replace(file_name, key))
+            
         self.__set_file_location()
         self.__set_cols_and_rows()
         self.__set_figure_kind()
