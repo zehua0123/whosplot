@@ -303,7 +303,7 @@ class Run(Abstract):
                     color_gradient[fignum].append(False)
         return color_gradient
 
-    def two_d_subplots(self):
+    def two_d_subplots(self, filling=False, **kwargs):
         """Create 2D subplots for the data."""
         color_gradient = self.__color_gradient()
         color_array = self.__color_map_array(color_gradient)
@@ -320,7 +320,15 @@ class Run(Abstract):
                 if self.__figure_number > 1:
                     self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
 
-        self.__set_axis_style()
+            if filling:
+                try:
+                    filling_data = kwargs['filling_data']
+                    extra_legend = kwargs['extra_legend']
+                except KeyError:
+                    raise ValueError('The filling data and label list are required.')
+                self.__filling(filling_data, extra_legend, fig_num, color_array)
+
+        self.__set_axis_style(**kwargs)
 
     def color_gradient_two_d_subplots(self):
         """Create 2D subplots with color gradients."""
@@ -362,27 +370,6 @@ class Run(Abstract):
                 linewidth=0,
                 label=label_list[fig_num][i]
             )
-
-    def filling_two_d_subplots(self, filling_data, label_list):
-        """Create 2D subplots with filling."""
-        color_gradient = self.__color_gradient()
-        color_array = self.__color_map_array(color_gradient)
-        for fig_num in range(self.__figure_number):
-            legend_len = self.__legend_len_list[fig_num]
-            scatter_index = self.__kind_index[fig_num]
-            for line_num in range(legend_len):
-                if int((line_num * 2) + 1) not in scatter_index:
-                    self.__plot(fig_num, line_num, color_array)
-
-                else:
-                    self.__scatter(fig_num, line_num, color_array)
-
-                if self.__figure_number > 1:
-                    self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
-
-            self.__filling(filling_data, label_list, fig_num, color_array)
-
-        self.__set_axis_style(extra_legend=label_list)
 
     def pie_chart(self):
         pass

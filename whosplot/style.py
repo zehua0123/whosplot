@@ -683,7 +683,7 @@ class Style(Abstract):
         self.__ticklabel_format()
         self.__title()
         self.__label_limitation()
-        self.__legend(extra_legend=kwargs.get('extra_legend', None))
+        self.__legend(**kwargs)
         self.__label()
 
     def __set_content_style(self):
