@@ -346,22 +346,37 @@ class Run(Abstract):
 
         self.__set_axis_style()
 
-    # def filling_two_d_subplots(self):
-    #     """Create 2D subplots with filling."""
-    #     color_gradient = self.__color_gradient()
-    #     color_array = self.__color_map_array(color_gradient)
-    #     for fig_num in range(self.__figure_number):
-    #         legend_len = self.__legend_len_list[fig_num]
-    #         scatter_index = self.__kind_index[fig_num]
-    #         for line_num in range(legend_len):
-    #             if int((line_num * 2) + 1) not in scatter_index:
-    #                 self.__plot(fig_num, line_num, color_array)
+    def __filling(self, filling_data, fig_num, line_num, color_array):
+        
+        self.axs[
+            int(fig_num // self.__cols), int(fig_num % self.__cols)
+        ].fill_between(
+            filling_data[fig_num][:, line_num * 2],
+            filling_data[fig_num][:, int(line_num * 2 + 1)],
+            color=color_array[fig_num, line_num],
+            alpha=0.5,
+            zorder=100
+        )
 
-    #             else:
-    #                 self.__scatter(fig_num, line_num, color_array)
+    def filling_two_d_subplots(self, filling_data):
+        """Create 2D subplots with filling."""
+        color_gradient = self.__color_gradient()
+        color_array = self.__color_map_array(color_gradient)
+        for fig_num in range(self.__figure_number):
+            legend_len = self.__legend_len_list[fig_num]
+            scatter_index = self.__kind_index[fig_num]
+            self.__filling(filling_data)
+            for line_num in range(legend_len):
+                if int((line_num * 2) + 1) not in scatter_index:
+                    self.__plot(fig_num, line_num, color_array)
 
-    #             if self.__figure_number > 1:
-    #                 self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
+                else:
+                    self.__scatter(fig_num, line_num, color_array)
+
+                if self.__figure_number > 1:
+                    self.__figure_serial(fig_num, use_tex=self.plt.rcParams['text.usetex'])
+
+        self.__set_axis_style()
 
     # def draw_igd(self):
 
