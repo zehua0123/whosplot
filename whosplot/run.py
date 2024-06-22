@@ -46,114 +46,29 @@ class Run(Abstract):
         self.axs = self.__Style.axs
         self.fig = self.__Style.fig
         self.plt = self.__Style.plt
-        self.__attribute()
+        self.__set_attributes()
         print_header()
 
-    def __set_file_location(self) -> None:
+    def __set_attributes(self):
         """
-        Get the file path of the csv file.
-        :return: file path
+        Set various attributes for the execution and plotting of CSV data.
         """
-        self.__file_location = self.__Parameter.__getattr__('file_location')
+        param_attrs = ['file_location', 'cols', 'rows', 'color_map']
+        csv_attrs = ['data', 'figure_number', 'legend_len_list', 'legend', 'kind_index']
+        style_attrs = ['marker', 'color_map_array', 'line_style', 'line_width']
 
-    def __set_cols_and_rows(self) -> None:
-        """
-        Get the cols and rows of the csv file.
-        :return: cols and rows
-        """
-        self.__cols = self.__Parameter.__getattr__('cols')
-        self.__rows = self.__Parameter.__getattr__('rows')
-
-    def __set_data(self) -> None:
-        """
-        Get the data of the csv file.
-        :return: data
-        """
-        self.__data = self.__CsvReader.__getattr__('data')
-
-    def __set_color_map(self) -> None:
-        """
-        Get the color map of the csv file.
-        :return: color map
-        """
-        self.__color_map = self.__Parameter.__getattr__('color_map')
-
-    def __set_figure_number(self) -> None:
-        """
-        Get the figure number of the csv file.
-        :return: figure number
-        """
-        self.__figure_number = self.__CsvReader.__getattr__('figure_number')
-
-    def __set_legend_len_list(self) -> None:
-        """
-        Get the legend len list of the csv file.
-        :return: legend len list
-        """
-        self.__legend_len_list = self.__CsvReader.__getattr__('legend_len_list')
-
-    def __set_legend(self) -> None:
-        """
-        Get the legend of the csv file.
-        :return: legend
-        """
-        self.__legend_ = self.__CsvReader.__getattr__('legend')
-
-    def __set_kind_index(self):
-        """
-        Get the kind index of the csv file.
-        :return: kind index
-        """
-        self.__kind_index = self.__CsvReader.__getattr__('kind_index')
-
-    def __set_marker(self):
-        """
-        Get the marker of the csv file.
-        :return: marker
-        """
-        self.__marker = self.__Style.__getattr__('marker')
-
-    def __set_color_map_array(self):
-        """
-        Get the color map array of the csv file.
-        :return: color map array
-        """
-        self.__color_map_array_ = self.__Style.__getattr__('color_map_array')
+        for attr in param_attrs:
+            setattr(self, f"_Run__{attr}", getattr(self.__Parameter, attr))
+        for attr in csv_attrs:
+            setattr(self, f"_Run__{attr}", getattr(self.__CsvReader, attr))
+        for attr in style_attrs:
+            setattr(self, f"_Run__{attr}", getattr(self.__Style, attr))
 
     def __set_axis_style(self, **kwargs):
         """
-        Set the axis style of the csv file.
-        :return: None
+        Set the axis style of the plot.
         """
         self.__Style.set_axis_style(**kwargs)
-
-    def __set_line_style(self):
-        """
-        Set the line style of the csv file.
-        :return: None
-        """
-        self.__line_style = self.__Style.__getattr__('line_style')
-
-    def __set_line_width(self):
-        """
-        Set the line width of the csv file.
-        :return: None
-        """
-        self.__line_width = self.__Style.__getattr__('line_width')
-
-    def __attribute(self):
-        self.__set_file_location()
-        self.__set_cols_and_rows()
-        self.__set_data()
-        self.__set_color_map()
-        self.__set_figure_number()
-        self.__set_legend_len_list()
-        self.__set_legend()
-        self.__set_kind_index()
-        self.__set_marker()
-        self.__set_color_map_array()
-        self.__set_line_style()
-        self.__set_line_width()
 
     def save_fig(self, fig_format='jpg'):
         self.plt.savefig('{}.{}'.format(self.__file_location.replace('.csv', ''), fig_format))
@@ -269,12 +184,12 @@ class Run(Abstract):
             verticalalignment='top',
             size=18)
 
-    def __color_map_array(self, color_gradient: list, func='Euclidean_distance'):
+    def __cal_color_map_array(self, color_gradient: list, func='Euclidean_distance'):
         color_array = {}
 
         for fig_num in range(self.__figure_number):
             legend_len = self.__legend_len_list[fig_num]
-            color_map_array_len = len(self.__color_map_array_[fig_num]) - 1
+            color_map_array_len = len(self.__color_map_array[fig_num]) - 1
 
             for line_num in range(legend_len):
                 if color_gradient[fig_num][line_num] and func == 'Euclidean_distance':
@@ -289,15 +204,15 @@ class Run(Abstract):
 
                 else:
                     index_ = int(line_num * color_map_array_len / max((legend_len - 1), 1))
-                    color_array[fig_num, line_num] = self.__color_map_array_[fig_num][index_]
+                    color_array[fig_num, line_num] = self.__color_map_array[fig_num][index_]
         return color_array
 
-    def __color_gradient(self, switch=False):
+    def __cal_color_gradient(self, switch=False):
         color_gradient = []
         for fignum in range(self.__figure_number):
             color_gradient.append([])
             for line_num in range(self.__legend_len_list[fignum]):
-                if 'color_gradient' in self.__legend_[fignum][int((line_num * 2) + 1)] and switch:
+                if 'color_gradient' in self.__legend[fignum][int((line_num * 2) + 1)] and switch:
                     color_gradient[fignum].append(True)
                 else:
                     color_gradient[fignum].append(False)
@@ -305,8 +220,8 @@ class Run(Abstract):
 
     def two_d_subplots(self, filling=False, **kwargs):
         """Create 2D subplots for the data."""
-        color_gradient = self.__color_gradient()
-        color_array = self.__color_map_array(color_gradient)
+        color_gradient = self.__cal_color_gradient()
+        color_array = self.__cal_color_map_array(color_gradient)
         for fig_num in range(self.__figure_number):
             legend_len = self.__legend_len_list[fig_num]
             scatter_index = self.__kind_index[fig_num]
@@ -332,8 +247,8 @@ class Run(Abstract):
 
     def color_gradient_two_d_subplots(self):
         """Create 2D subplots with color gradients."""
-        color_gradient = self.__color_gradient(switch=True)
-        color_array = self.__color_map_array(color_gradient)
+        color_gradient = self.__cal_color_gradient(switch=True)
+        color_array = self.__cal_color_map_array(color_gradient)
 
         for fig_num in range(self.__figure_number):
             legend_len = self.__legend_len_list[fig_num]

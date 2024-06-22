@@ -16,7 +16,7 @@ class Style(Abstract):
         self.plt = plt
         self.__Parameter = Parameter()
         self.__CsvReader = CsvReader()
-        self.__attribute()
+        self.__set_attributes()
         self.__set_content_style()
 
     def __create_figure(self):
@@ -36,170 +36,30 @@ class Style(Abstract):
             if self.__label_len_list[num] == 3:
                 self.ax0 = self.axs[int(num // self.__cols), int(num % self.__cols)].twinx()
 
-    def __attribute(self):
+    def __set_attributes(self):
         """
         Set various attributes for the figure.
         Calls a series of methods to set up the rows, columns, figure number, label lengths, 
         x and y label types, tick label formats, title, limited labels, legend properties, 
         language, and other styles.
         """
-        attributes = [
-            self.__set_rows_and_cols, self.__set_width_and_height, self.__set_figure_number,
-            self.__set_label_len_list, self.__set_x_label_type, self.__set_y_label_type,
-            self.__set_x_ticklabel_format, self.__set_y_ticklabel_format, self.__set_title,
-            self.__set_limited_label, self.__set_legend_len_list, self.__set_legend,
-            self.__set_legend_location, self.__set_language, self.__set_label,
-            self.__set_line_with_marker, self.__set_multi_line_style, self.__set_figure_kind,
-            self.__set_line_width, self.__set_color_map, self.__set__kind_index
+        parameter_attributes = [
+            'rows', 'cols', 'width', 'height', 'x_label_type', 'y_label_type', 
+            'x_ticklabel_format', 'y_ticklabel_format', 'title', 'limited_label', 
+            'legend_location', 'line_with_marker', 'multi_line_style', 
+            'figure_kind', 'line_width', 'color_map'
         ]
-        for attr in attributes:
-            attr()
+        
+        csvreader_attributes = [
+            'figure_number', 'label_len_list', 'legend_len_list', 'legend', 
+            'language', 'label', 'kind_index'
+        ]
 
-    def __set_rows_and_cols(self):
-        """
-        Set the number of rows and columns for the subplots.
-        """
-        self.__rows = self.__Parameter.__getattr__('rows')
-        self.__cols = self.__Parameter.__getattr__('cols')
+        for attr in parameter_attributes:
+            setattr(self, f"_{self.__class__.__name__}__{attr}", getattr(self.__Parameter, attr))
 
-    def __set_width_and_height(self):
-        """
-        Set the width and height of each subplot.
-        """
-        self.__width = self.__Parameter.__getattr__('width')
-        self.__height = self.__Parameter.__getattr__('height')
-
-    def __set_figure_number(self):
-        """
-        Set the number of figures (subplots).
-        """
-        self.__figure_number = self.__CsvReader.__getattr__('figure_number')
-
-    def __set_label_len_list(self):
-        """
-        Set the length of the label.
-        :return:
-        """
-        self.__label_len_list = self.__CsvReader.__getattr__('label_len_list')
-
-    def __set_x_label_type(self):
-        """
-        Set the type of the x label.
-        :return:
-        """
-        self.__x_label_type = self.__Parameter.__getattr__('x_label_type')
-
-    def __set_y_label_type(self):
-        """
-        Set the type of the y label.
-        :return:
-        """
-        self.__y_label_type = self.__Parameter.__getattr__('y_label_type')
-
-    def __set_x_ticklabel_format(self):
-        """
-        Set the format of the x ticklabel.
-        :return:
-        """
-        self.__x_ticklabel_format = self.__Parameter.__getattr__('x_ticklabel_format')
-
-    def __set_y_ticklabel_format(self):
-        """
-        Set the format of the y ticklabel.
-        :return:
-        """
-        self.__y_ticklabel_format = self.__Parameter.__getattr__('y_ticklabel_format')
-
-    def __set_title(self):
-        """
-        Set the title of the figure.
-        :return:
-        """
-        self.__title_ = self.__Parameter.__getattr__('title')
-
-    def __set_limited_label(self):
-        """
-        Set the limited label of the figure.
-        :return:
-        """
-        self.__limited_label = self.__Parameter.__getattr__('limited_label')
-
-    def __set_legend_len_list(self):
-        """
-        Set the length of the legend.
-        :return:
-        """
-        self.__legend_len_list = self.__CsvReader.__getattr__('legend_len_list')
-
-    def __set_legend(self):
-        """
-        Set the legend of the figure.
-        :return:
-        """
-        self.__legend_ = self.__CsvReader.__getattr__('legend')
-
-    def __set_legend_location(self):
-        """
-        Set the location of the legend.
-        :return:
-        """
-        self.__legend_location = self.__Parameter.__getattr__('legend_location')
-
-    def __set_language(self):
-        """
-        Set the language of the figure.
-        :return:
-        """
-        self.__language = self.__CsvReader.__getattr__('language')
-
-    def __set_label(self):
-        """
-        Set the label of the figure.
-        :return:
-        """
-        self.__label_ = self.__CsvReader.__getattr__('label')
-
-    def __set_line_with_marker(self):
-        """
-        Set the line with marker of the figure.
-        :return:
-        """
-        self.__line_with_marker = self.__Parameter.__getattr__('line_with_marker')
-
-    def __set_multi_line_style(self):
-        """
-        Set the multi line style of the figure.
-        :return:
-        """
-        self.__multi_line_style = self.__Parameter.__getattr__('multi_line_style')
-
-    def __set_figure_kind(self):
-        """
-        Set the kind of the figure.
-        :return:
-        """
-        self.__figure_kind = self.__Parameter.__getattr__('figure_kind')
-
-    def __set_line_width(self):
-        """
-        Set the line width of the figure.
-        :return:
-        """
-        self.__line_width_ = self.__Parameter.__getattr__('line_width')
-
-    def __set_color_map(self):
-        """
-        Set the color map of the figure.
-        :return:
-        """
-        self.__color_map_ = self.__Parameter.__getattr__('color_map')
-
-    def __set__kind_index(self):
-        """
-        Set the kind index of the figure.
-        :return:
-        """
-        self.__kind_index = self.__CsvReader.__getattr__('kind_index')
+        for attr in csvreader_attributes:
+            setattr(self, f"_{self.__class__.__name__}__{attr}", getattr(self.__CsvReader, attr))
 
     '''
     ============================== global configuration inherited from matplotlibrc =================================
@@ -420,7 +280,7 @@ class Style(Abstract):
         self.plt.rcParams['mathtext.cal'] = 'cursive'
         # The calligraphic font used for text. Should be a valid key in the font.family dictionary.
 
-    def __label_type(self):
+    def __set_label_type(self):
         """
         Set the label type.
         :return: 0
@@ -441,7 +301,7 @@ class Style(Abstract):
             if y_label_type[num] is not None:
                 self.axs[int(num // self.__cols), int(num % self.__cols)].set_yscale(y_label_type[num])
 
-    def __ticklabel_format(self):
+    def __set_ticklabel_format(self):
         """
         Set the scale type for x and y labels for each subplot.
         """
@@ -469,17 +329,17 @@ class Style(Abstract):
                     scilimits=(0, 0),
                     useMathText=True)
 
-    def __title(self):
+    def __set_title(self):
         """
         Set the title for each subplot.
         """
-        if self.__title_:
+        if self.__title:
             for num in range(self.__figure_number):
                 self.axs[
                     int(num // self.__cols),
-                    int(num % self.__cols)].set_title(self.__title_, fontdict={'size': 26, 'weight': 'bold'})
+                    int(num % self.__cols)].set_title(self.__title, fontdict={'size': 26, 'weight': 'bold'})
 
-    def __label_limitation(self):
+    def __set_label_limitation(self):
         """
         Set the limits for the x and y labels for each subplot.
         """
@@ -511,7 +371,7 @@ class Style(Abstract):
             if len(self.__limited_label[fignum]) != 4 and len(self.__limited_label[fignum]) != 6:
                 raise ValueError('The limited label size is wrong!')
 
-    def __legend(self, **kwargs):
+    def __set_legend(self, **kwargs):
         """
         Set the legend for each subplot.
         Handles additional legend items if provided via kwargs.
@@ -520,14 +380,14 @@ class Style(Abstract):
             # Handle custom legends if provided
             if kwargs.get('extra_legend') is not None:
                 arg_list = kwargs['extra_legend'][num]
-                legend_new = self.__legend_[num] + \
+                legend_new = self.__legend[num] + \
                     [item for sublist in [arg_list[i:i+2] for i in range(0, len(arg_list), 4)] for item in sublist]
                 legend_items = legend_new[1::2]
             else:
                 # Default handling when no extra_legend is provided
                 if self.__legend_len_list[num] == 1:
                     return 0  # Assuming the function should terminate early in this case
-                legend_items = self.__legend_[num][1::2]
+                legend_items = self.__legend[num][1::2]
 
             # Configure the legend based on the label length
             if self.__label_len_list[num] != 3:
@@ -542,22 +402,22 @@ class Style(Abstract):
             else:
                 raise ValueError('Side ylabel is not supported now!')
 
-    def __label(self):
+    def __set_label(self):
         """
         Set the labels for the x and y axes for each subplot.
         """
         for num in range(self.__figure_number):
             if self.__label_len_list[num] == 2 or self.__label_len_list[num] == 3:
                 self.axs[int(num // self.__cols), int(num % self.__cols)].set_xlabel(
-                    self.__label_[num][0],
+                    self.__label[num][0],
                     fontdict={'weight': 'bold'})
                 self.axs[int(num // self.__cols), int(num % self.__cols)].set_ylabel(
-                    self.__label_[num][1],
+                    self.__label[num][1],
                     fontdict={'weight': 'bold'})
 
             elif self.__label_len_list[num] == 3:
                 self.ax0.set_ylabel(
-                    self.__label_[num][2],
+                    self.__label[num][2],
                     fontdict={'weight': 'bold'},
                     rotation=270,
                     labelpad=24)
@@ -570,7 +430,7 @@ class Style(Abstract):
             else:
                 raise ValueError('The label size is wrong!')
 
-    def __marker(self):
+    def __set_marker(self):
         """
         Set the markers for each line in the subplots.
         Configures the marker style based on the type of figure.
@@ -596,7 +456,7 @@ class Style(Abstract):
             else:
                 self.marker.append([None] * len(filled_markers))
 
-    def __line_style(self):
+    def __set_line_style(self):
         """
         Set the line styles for each line in the subplots.
         Configures the line style based on the type of figure.
@@ -637,17 +497,17 @@ class Style(Abstract):
             else:
                 self.line_style.append(['-'] * 100)
 
-    def __line_width(self):
+    def __set_line_width(self):
         """
         Set the line widths for each line in the subplots.
         """
-        multi_line_width = self.__line_width_
+        multi_line_width = self.__line_width
         if multi_line_width is None:
             self.line_width = [[1.5 for _ in range(100)] for _ in range(self.__figure_number)]
         else:
             self.line_width = [[multi_line_width for _ in range(100)] for _ in range(self.__figure_number)]
 
-    def __color_map(self):
+    def __set_color_map(self):
         """
             Perceptually Uniform Sequential:    viridis,plasma,inferno,magma,cividis \n\r
 
@@ -670,7 +530,7 @@ class Style(Abstract):
         """
         self.color_map_array = []
         for num in range(self.__figure_number):
-            color_map_array_ = plt.get_cmap(self.__color_map_[num]).colors
+            color_map_array_ = plt.get_cmap(self.__color_map[num]).colors
             self.color_map_array.append(np.array(color_map_array_))
 
     def set_axis_style(self, **kwargs):
@@ -678,12 +538,12 @@ class Style(Abstract):
         Set the style for the axes.
         Configures the label type, tick label format, title, label limitations, legend, and labels.
         """
-        self.__label_type()
-        self.__ticklabel_format()
-        self.__title()
-        self.__label_limitation()
-        self.__legend(**kwargs)
-        self.__label()
+        self.__set_label_type()
+        self.__set_ticklabel_format()
+        self.__set_title()
+        self.__set_label_limitation()
+        self.__set_legend(**kwargs)
+        self.__set_label()
 
     def __set_content_style(self):
         """
@@ -691,10 +551,10 @@ class Style(Abstract):
         Configures the figure creation, markers, line styles, line widths, and color map.
         """
         self.__create_figure()
-        self.__marker()
-        self.__line_style()
-        self.__line_width()
-        self.__color_map()
+        self.__set_marker()
+        self.__set_line_style()
+        self.__set_line_width()
+        self.__set_color_map()
 
     def __set_rcParams(self):
         """
