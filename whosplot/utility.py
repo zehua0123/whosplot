@@ -405,9 +405,10 @@ def if_true(value):
 
 def check_file(file_path):
     """
-
-    :param file_path:
-    :return:
+    Check if the specified file exists.
+    
+    :param file_path: Path to the file to check.
+    :raises FileNotFoundError: If the file does not exist.
     """
     if os.path.exists(file_path):
         pass

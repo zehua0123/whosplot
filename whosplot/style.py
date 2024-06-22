@@ -8,7 +8,11 @@ import matplotlib.pyplot as plt
 
 class Style(Abstract):
     def __init__(self):
-        super(Style, self).__init__()
+        """
+        Initialize the Style class.
+        Sets up the parameters and styles for plotting.
+        """
+        super().__init__()
         self.plt = plt
         self.__Parameter = Parameter()
         self.__CsvReader = CsvReader()
@@ -16,6 +20,11 @@ class Style(Abstract):
         self.__set_content_style()
 
     def __create_figure(self):
+        """
+        Create the figure and subplots.
+        Sets up the figure with multiple subplots based on the specified rows and columns.
+        If any subplot requires a secondary y-axis, it sets that up as well.
+        """
         self.__set_rcParams()
         self.axs_dict = {}
         self.fig, self.axs = plt.subplots(self.__rows, self.__cols,
@@ -27,26 +36,42 @@ class Style(Abstract):
             if self.__label_len_list[num] == 3:
                 self.ax0 = self.axs[int(num // self.__cols), int(num % self.__cols)].twinx()
 
+    def __attribute(self):
+        """
+        Set various attributes for the figure.
+        Calls a series of methods to set up the rows, columns, figure number, label lengths, 
+        x and y label types, tick label formats, title, limited labels, legend properties, 
+        language, and other styles.
+        """
+        attributes = [
+            self.__set_rows_and_cols, self.__set_width_and_height, self.__set_figure_number,
+            self.__set_label_len_list, self.__set_x_label_type, self.__set_y_label_type,
+            self.__set_x_ticklabel_format, self.__set_y_ticklabel_format, self.__set_title,
+            self.__set_limited_label, self.__set_legend_len_list, self.__set_legend,
+            self.__set_legend_location, self.__set_language, self.__set_label,
+            self.__set_line_with_marker, self.__set_multi_line_style, self.__set_figure_kind,
+            self.__set_line_width, self.__set_color_map, self.__set__kind_index
+        ]
+        for attr in attributes:
+            attr()
+
     def __set_rows_and_cols(self):
         """
-        Set the rows and cols of the figure.
-        :return:
+        Set the number of rows and columns for the subplots.
         """
         self.__rows = self.__Parameter.__getattr__('rows')
         self.__cols = self.__Parameter.__getattr__('cols')
 
     def __set_width_and_height(self):
         """
-        Set the width and height of the figure.
-        :return:
+        Set the width and height of each subplot.
         """
         self.__width = self.__Parameter.__getattr__('width')
         self.__height = self.__Parameter.__getattr__('height')
 
     def __set_figure_number(self):
         """
-        Set the number of the figure.
-        :return:
+        Set the number of figures (subplots).
         """
         self.__figure_number = self.__CsvReader.__getattr__('figure_number')
 
@@ -176,41 +201,14 @@ class Style(Abstract):
         """
         self.__kind_index = self.__CsvReader.__getattr__('kind_index')
 
-    def __attribute(self):
-        """
-        Set the attributes of the figure.
-        :return:
-        """
-        self.__set_rows_and_cols()
-        self.__set_width_and_height()
-        self.__set_figure_number()
-        self.__set_label_len_list()
-        self.__set_x_label_type()
-        self.__set_y_label_type()
-        self.__set_x_ticklabel_format()
-        self.__set_y_ticklabel_format()
-        self.__set_title()
-        self.__set_limited_label()
-        self.__set_legend_len_list()
-        self.__set_legend()
-        self.__set_legend_location()
-        self.__set_language()
-        self.__set_label()
-        self.__set_line_with_marker()
-        self.__set_multi_line_style()
-        self.__set_figure_kind()
-        self.__set_line_width()
-        self.__set_color_map()
-        self.__set__kind_index()
-
     '''
     ============================== global configuration inherited from matplotlibrc =================================
     '''
 
     def __set_axis(self):
         """
-        set axis
-        :return: 0
+        Set the axis properties using matplotlib rcParams.
+        Configures the appearance and behavior of the axes.
         """
         self.plt.rcParams['axes.facecolor'] = 'white'  # axes background color
         self.plt.rcParams['axes.edgecolor'] = 'black'  # axes edge color
@@ -269,8 +267,8 @@ class Style(Abstract):
 
     def __set_tick(self):
         """
-        set tick
-        :return: 0
+        Set the properties for the ticks using matplotlib rcParams.
+        Configures the appearance and behavior of the x and y ticks.
         """
         self.plt.rcParams['xtick.top'] = False  # draw ticks on the top side
         self.plt.rcParams['xtick.bottom'] = True  # draw ticks on the bottom side
@@ -316,8 +314,8 @@ class Style(Abstract):
 
     def __set_figure(self):
         """
-        set figure
-        :return: 0
+        Set the properties for the figure using matplotlib rcParams.
+        Configures the overall appearance and layout of the figure.
         """
         self.plt.rcParams['figure.titlesize'] = 'large'  # size of the figure title (``Figure.suptitle()``)
         self.plt.rcParams['figure.titleweight'] = 'normal'  # weight of the figure title
@@ -356,8 +354,8 @@ class Style(Abstract):
 
     def __set_font(self):
         """
-        If self.plt.rcParams['text.usetex'] = True this will be ignored
-        :return:
+        Set the font properties using matplotlib rcParams.
+        Configures the appearance of text elements in the figure.
         """
         self.plt.rcParams['font.family'] = ['serif', 'monospace', 'cursive', 'sans-serif', 'SimSun']
         self.plt.rcParams['font.style'] = 'normal'
@@ -384,9 +382,8 @@ class Style(Abstract):
 
     def __set_latex(self):
         """
-        In order to use LaTeX, you must have LaTeX and the Python module matplotlib2tikz installed.
-
-        :return: 0
+        Set the properties for LaTeX rendering using matplotlib rcParams.
+        Configures the use of LaTeX for text handling and math text.
         """
         self.plt.rcParams['text.usetex'] = True
         # use latex for all text handling. The following fonts are supported through the usual rc parameter settings:
@@ -446,8 +443,7 @@ class Style(Abstract):
 
     def __ticklabel_format(self):
         """
-        Set the ticklabel format.
-        :return:
+        Set the scale type for x and y labels for each subplot.
         """
         for num in range(self.__figure_number):
             if self.__x_ticklabel_format is None or self.__x_ticklabel_format[num] == 'plain':
@@ -475,8 +471,7 @@ class Style(Abstract):
 
     def __title(self):
         """
-        Set the title.
-        :return: 0
+        Set the title for each subplot.
         """
         if self.__title_:
             for num in range(self.__figure_number):
@@ -486,8 +481,7 @@ class Style(Abstract):
 
     def __label_limitation(self):
         """
-        Set the label limitation.
-        :return: 0
+        Set the limits for the x and y labels for each subplot.
         """
         if self.__limited_label is None:
             return 0
@@ -519,10 +513,9 @@ class Style(Abstract):
 
     def __legend(self, **kwargs):
         """
-        Set the legend.
-        :return
+        Set the legend for each subplot.
+        Handles additional legend items if provided via kwargs.
         """
-
         for num in range(self.__figure_number):
             # Handle custom legends if provided
             if kwargs.get('extra_legend') is not None:
@@ -551,8 +544,7 @@ class Style(Abstract):
 
     def __label(self):
         """
-
-
+        Set the labels for the x and y axes for each subplot.
         """
         for num in range(self.__figure_number):
             if self.__label_len_list[num] == 2 or self.__label_len_list[num] == 3:
@@ -580,8 +572,8 @@ class Style(Abstract):
 
     def __marker(self):
         """
-        Set the marker.
-        :return:
+        Set the markers for each line in the subplots.
+        Configures the marker style based on the type of figure.
         """
         self.marker = []
         line_with_marker = self.__line_with_marker
@@ -606,8 +598,8 @@ class Style(Abstract):
 
     def __line_style(self):
         """
-        Set the line style.
-        :return:
+        Set the line styles for each line in the subplots.
+        Configures the line style based on the type of figure.
         linestyle_str = [
             ('solid', 'solid'),  # Same as (0, ()) or '-'
             ('dotted', 'dotted'),  # Same as (0, (1, 1)) or ':'
@@ -646,6 +638,9 @@ class Style(Abstract):
                 self.line_style.append(['-'] * 100)
 
     def __line_width(self):
+        """
+        Set the line widths for each line in the subplots.
+        """
         multi_line_width = self.__line_width_
         if multi_line_width is None:
             self.line_width = [[1.5 for _ in range(100)] for _ in range(self.__figure_number)]
@@ -679,6 +674,10 @@ class Style(Abstract):
             self.color_map_array.append(np.array(color_map_array_))
 
     def set_axis_style(self, **kwargs):
+        """
+        Set the style for the axes.
+        Configures the label type, tick label format, title, label limitations, legend, and labels.
+        """
         self.__label_type()
         self.__ticklabel_format()
         self.__title()
@@ -687,6 +686,10 @@ class Style(Abstract):
         self.__label()
 
     def __set_content_style(self):
+        """
+        Set the content style for the figure.
+        Configures the figure creation, markers, line styles, line widths, and color map.
+        """
         self.__create_figure()
         self.__marker()
         self.__line_style()
@@ -695,8 +698,8 @@ class Style(Abstract):
 
     def __set_rcParams(self):
         """
-        Set the rcParams of matplotlib
-        :return: 0
+        Set the rcParams for matplotlib.
+        Configures the general appearance and behavior of the figure.
         """
         self.__set_axis()
         self.__set_tick()
