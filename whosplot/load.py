@@ -69,39 +69,21 @@ class CsvReader(Abstract):
     def __init__(self, key=None):
         super(CsvReader, self).__init__()
         self.__Parameter = Parameter()
+        self.__set_attributes(key=key)
+        self.__load_data()
 
-        if key:
+    def __set_attributes(self, key):
+        """
+        Set various attributes for the execution and plotting of CSV data.
+        """
+        if if_none(key):
             file_location = self.__Parameter.__getattr__('file_location')
             file_name = self.__Parameter.__getattr__('file_name')
             self.__Parameter.__setattr__('file_location', file_location.replace(file_name, key))
-            
-        self.__set_file_location()
-        self.__set_cols_and_rows()
-        self.__set_figure_kind()
-        self.__set_mixed_ylegend()
-        self.__set_limited_label()
-        self.__load_data()
 
-    def __set_file_location(self) -> None:
-        """Set the file location of the CSV file."""
-        self.__file_location = self.__Parameter.__getattr__('file_location')
-
-    def __set_cols_and_rows(self) -> None:
-        """Set the columns and rows of the CSV file."""
-        self.__cols = self.__Parameter.__getattr__('cols')
-        self.__rows = self.__Parameter.__getattr__('rows')
-
-    def __set_figure_kind(self) -> None:
-        """Set the figure kind of the CSV file."""
-        self.__figure_kind = self.__Parameter.__getattr__('figure_kind')
-
-    def __set_mixed_ylegend(self) -> None:
-        """Set the mixed ylegend of the CSV file."""
-        self.__mixed_ylegend = self.__Parameter.__getattr__('mixed_ylegend')
-
-    def __set_limited_label(self) -> None:
-        """Set the limited label of the CSV file."""
-        self.__limited_label = self.__Parameter.__getattr__('limited_label')
+        param_attrs = ['file_location', 'file_name','cols', 'rows', 'color_map', 'figure_kind', 'mixed_ylegend', 'limited_label']
+        for attr in param_attrs:
+            setattr(self, f"_CsvReader__{attr}", getattr(self.__Parameter, attr))
 
     @classmethod
     def __extract_label(cls, header: list) -> list:

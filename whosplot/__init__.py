@@ -23,7 +23,7 @@
 
 __title__ = "whosplot"
 __description__ = "Scientific plot style for Researchers."
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __build__ = 0x022801
 __author__ = "Hu, Zehua"
 __author_email__ = "merlinihu0828@gmail.com"
