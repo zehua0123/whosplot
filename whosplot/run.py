@@ -537,18 +537,149 @@ class Run(Abstract):
                 )
                 cbar.ax.xaxis.set_label_position('bottom')
 
-    def pie_chart(self):
-        pass
+    def __spow(self, x, p): 
+        return np.sign(x) * (np.abs(x) ** p)
 
-    def histogram(self):
-        pass
+    def __superellipsoid(self, p):
+        a1 = float(p.get('a1'))
+        a2 = float(p.get('a2'))
+        a3 = float(p.get('a3'))
+        e1 = float(p.get('e1'))
+        e2 = float(p.get('e2'))
+        nu = int(p.get('nu'))
+        nv = int(p.get('nv'))
+        u = np.linspace(-0.5*np.pi, 0.5*np.pi, nu)
+        v = np.linspace(-np.pi, np.pi, nv)
+        U, V = np.meshgrid(u, v, indexing="ij")
+        Cu, Su = self.__spow(np.cos(U), e1), self.__spow(np.sin(U), e1)
+        Cv, Sv = self.__spow(np.cos(V), e2), self.__spow(np.sin(V), e2)
+        X = a1 * Cu * Cv; Y = a2 * Cu * Sv; Z = a3 * Su
+        return X, Y, Z
 
-    def box_plot(self):
-        pass
+    def __supertoroid(self, p):
+        aM = float(p.get('a_major'))
+        am = float(p.get('a_minor'))
+        a3 = float(p.get('a3'))
+        e1 = float(p.get('e1'))
+        e2 = float(p.get('e2'))
+        nu = int(p.get('nu'))   
+        nv = int(p.get('nv'))
+        u = np.linspace(-np.pi, np.pi, nu)
+        v = np.linspace(-np.pi, np.pi, nv)
+        U, V = np.meshgrid(u, v, indexing="ij")
+        Cu, Su = self.__spow(np.cos(U), e2), self.__spow(np.sin(U), e2)
+        Cv, Sv = self.__spow(np.cos(V), e1), self.__spow(np.sin(V), e1)
+        R = aM + am * Cv
+        X = R * Cu; Y = R * Su; Z = a3 * Sv
+        return X, Y, Z
 
-    def violin_plot(self):
-        pass
+    def __sh1(self, p):
+        a1 = float(p.get('a1'))
+        a2 = float(p.get('a2'))
+        a3 = float(p.get('a3'))
+        e1 = float(p.get('e1'))
+        e2 = float(p.get('e2'))
+        uext = float(p.get('u_extent'))
+        nu = int(p.get('nu'))
+        nv = int(p.get('nv'))
+        u = np.linspace(-uext, uext, nu)
+        v = np.linspace(-np.pi, np.pi, nv)
+        U, V = np.meshgrid(u, v, indexing="ij")
+        CH = (np.cosh(U))**e1
+        SH = self.__spow(np.sinh(U), e1)
+        Cv, Sv = self.__spow(np.cos(V), e2), self.__spow(np.sin(V), e2)
+        X = a1 * CH * Cv; Y = a2 * CH * Sv; Z = a3 * SH
+        return X, Y, Z
 
+    def __sh2(self, p):
+        a1 = float(p.get('a1'))
+        a2 = float(p.get('a2'))
+        a3 = float(p.get('a3'))
+        e1 = float(p.get('e1'))
+        e2 = float(p.get('e2'))
+        nu = int(p.get('nu'))
+        nv = int(p.get('nv'))
+        u_min = float(p.get('u_min')) 
+        u_max = float(p.get('u_max'))
+        u = np.linspace(u_min, u_max, nu)
+        v = np.linspace(-np.pi, np.pi, nv)
+        U, V = np.meshgrid(u, v, indexing="ij")
+        SH = (np.sinh(U))**e1; CH = (np.cosh(U))**e1
+        Cv, Sv = self.__spow(np.cos(V), e2), self.__spow(np.sin(V), e2)
+        X = a1 * SH * Cv; Y = a2 * SH * Sv; Zp =  a3 * CH; Zm = -a3 * CH
+        return (X, Y, Zp), (X, Y, Zm)
 
-    
-    
+    def __superparaboloid(self, p):
+        a1 = float(p.get('a1'))
+        a2 = float(p.get('a2'))
+        a3 = float(p.get('a3'))
+        e1 = float(p.get('e1'))
+        e2 = float(p.get('e2'))
+        nu = int(p.get('nu'))
+        nv = int(p.get('nv'))
+        u = np.linspace(0.0, 1.0, nu)
+        v = np.linspace(-np.pi, np.pi, nv)
+        U, V = np.meshgrid(u, v, indexing="ij")
+        R = U; Zshape = U ** (2.0 / e1)
+        Cv, Sv = self.__spow(np.cos(V), e2), self.__spow(np.sin(V), e2)
+        X = a1 * R * Cv; Y = a2 * R * Sv; Z = a3 * Zshape
+        return X, Y, Z
+
+    def __ax(self, i): 
+        return self.axs[int(i // self.__cols), int(i % self.__cols)]
+
+    def draw_superquadrics(self, items):
+
+        self.fig, self.axs = self.plt.subplots(self._Run__rows, 
+                                               self._Run__cols, 
+                                               figsize=(self._Run__width * self._Run__cols, self._Run__height * self._Run__rows), 
+                                               subplot_kw={'projection': '3d'}, 
+                                               squeeze=False)
+
+        # normalize items into a list of dicts
+        def _norm_item(it):
+            if isinstance(it, str):
+                return {"shape": it.strip().lower()}
+            d = dict(it)
+            d["shape"] = d.get("shape", d.get("kind", "")).strip().lower()
+            return d
+
+        items = [_norm_item(x) for x in items]
+
+        shape_map = {
+            'superellipsoid': self.__superellipsoid, 'se': self.__superellipsoid,
+            'supertoroid': self.__supertoroid, 'st': self.__supertoroid, 'ring': self.__supertoroid,
+            'hyperboloid_one_sheet': self.__sh1, 'sh1': self.__sh1,
+            'hyperboloid_two_sheets': self.__sh2, 'sh2': self.__sh2,
+            'superparaboloid': self.__superparaboloid, 'sp': self.__superparaboloid
+        }
+
+        # iterate and render
+        for i, spec in enumerate(items):
+
+            shape = spec.get('shape', 'superellipsoid')
+            builder = shape_map.get(shape, None)
+            ax = self.__ax(i)
+            ax.set_axis_off()
+
+            # camera
+            view = spec.get('view', None)
+            elev, azim = view
+            ax.view_init(elev=elev, azim=azim)
+
+            res = builder(spec)
+            if shape in ('hyperboloid_two_sheets', 'sh2'):
+                # draw both sheets on one axis
+                (X, Y, Zp), (X2, Y2, Zm) = res
+                ax.plot_surface(X, Y, Zp, rstride=1, cstride=1, linewidth=0, antialiased=True, shade=True, cmap=self._Run__color_map[i])
+                ax.plot_surface(X2, Y2, Zm, rstride=1, cstride=1, linewidth=0, antialiased=True, shade=True, cmap=self._Run__color_map[i])
+                try: ax.set_box_aspect((np.ptp(X), np.ptp(Y), max(np.ptp(Zp), np.ptp(Zm))))
+                except Exception: pass
+            else:
+                X, Y, Z = res
+                ax.plot_surface(X, Y, Z, rstride=1, cstride=1, linewidth=0, antialiased=True, shade=True, cmap=self._Run__color_map[i])
+                try: ax.set_box_aspect((np.ptp(X), np.ptp(Y), np.ptp(Z)))
+                except Exception: pass
+            
+            if self.__figure_number > 1:
+                self.__figure_serial(i, use_tex=self.plt.rcParams['text.usetex'])
