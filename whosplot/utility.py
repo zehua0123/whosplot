@@ -3,6 +3,7 @@ import os
 import numpy as np
 import platform
 import time
+import math
 from PIL import Image
 
 from whosplot.__init__ import \
@@ -330,3 +331,72 @@ def print_header():
         printwp('config.ini has been created. Please set parameter.')
         printer_septal_line()
         raise SystemExit
+
+def _pow_signed(x, p):
+    return np.sign(x) * (np.abs(x) ** p)
+
+def euler_to_matrix(angles, order='ZYX', degrees=True):
+    """Return 3x3 rotation matrix from Euler angles.
+
+    angles: (a,b,c) in degrees by default.
+    order:  one of 'XYZ','XZY','YXZ','YZX','ZXY','ZYX'. Default ZYX (yaw,pitch,roll).
+    """
+    ax, ay, az = angles
+    if degrees:
+        ax, ay, az = np.deg2rad([ax, ay, az])
+    order = order.upper()
+    def Rx(t):
+        c,s = np.cos(t), np.sin(t)
+        return np.array([[1,0,0],[0,c,-s],[0,s,c]])
+    def Ry(t):
+        c,s = np.cos(t), np.sin(t)
+        return np.array([[c,0,s],[0,1,0],[-s,0,c]])
+    def Rz(t):
+        c,s = np.cos(t), np.sin(t)
+        return np.array([[c,-s,0],[s,c,0],[0,0,1]])
+    mapping = {'X': Rx, 'Y': Ry, 'Z': Rz}
+    R = np.eye(3)
+    for ch, ang in zip(order, (ax, ay, az)):
+        R = R @ mapping[ch](ang)
+    return R
+
+def superellipsoid_grid(a1,a2,a3,e1,e2, u_count=64, v_count=64):
+    """Generate an axis-aligned superellipsoid surface grid at the origin.
+
+    Returns X,Y,Z in shape (u_count, v_count).
+    Parametrization uses:
+        eta in [-pi/2, pi/2], omega in [-pi, pi]
+    """
+    eta = np.linspace(-np.pi/2, np.pi/2, u_count)
+    omega = np.linspace(-np.pi, np.pi, v_count)
+    Eta, Om = np.meshgrid(eta, omega, indexing='ij')
+    cu = _pow_signed(np.cos(Eta), e1)
+    su = _pow_signed(np.sin(Eta), e1)
+    cv = _pow_signed(np.cos(Om), e2)
+    sv = _pow_signed(np.sin(Om), e2)
+    X = a1 * (cu * cv)
+    Y = a2 * (cu * sv)
+    Z = a3 * (su)
+    return X, Y, Z
+
+def apply_pose_to_grid(X, Y, Z, R, t):
+    """Apply rotation R (3x3) and translation t (3,) to grid arrays X,Y,Z."""
+    P = np.stack([X, Y, Z], axis=-1).reshape(-1, 3)
+    P = (P @ R.T) + np.asarray(t).reshape(1,3)
+    Xo, Yo, Zo = P[:,0].reshape(X.shape), P[:,1].reshape(Y.shape), P[:,2].reshape(Z.shape)
+    return Xo, Yo, Zo
+
+def superellipsoid_points(a1,a2,a3,e1,e2, u_count=64, v_count=64, R=None, t=(0,0,0)):
+    X, Y, Z = superellipsoid_grid(a1,a2,a3,e1,e2, u_count=u_count, v_count=v_count)
+    if R is None:
+        R = np.eye(3)
+    X, Y, Z = apply_pose_to_grid(X, Y, Z, R, t)
+    P = np.stack([X, Y, Z], axis=-1).reshape(-1,3)
+    return P
+
+def downsample_points(P, max_points=3000, seed=0):
+    if len(P) <= max_points:
+        return P
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(P), size=max_points, replace=False)
+    return P[idx]
