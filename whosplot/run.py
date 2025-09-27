@@ -683,3 +683,113 @@ class Run(Abstract):
             
             if self.__figure_number > 1:
                 self.__figure_serial(i, use_tex=self.plt.rcParams['text.usetex'])
+
+
+    def __superellipse2d_points(self, a: float = 1.0, b: float = 1.0,
+                                p_x: float = 1.0, p_y: float = 1.0,
+                                num: int = 720):
+        """
+        Sample an unrotated, origin-centered superellipse in 2D.
+
+        x(t) = a * sgn(cos t) * |cos t|**p_x
+        y(t) = b * sgn(sin t) * |sin t|**p_y
+        """
+        t = np.linspace(0.0, 2.0 * np.pi, int(num), endpoint=True)
+        x = a * self.__spow(np.cos(t), p_x)
+        y = b * self.__spow(np.sin(t), p_y)
+        return x, y
+
+    def __transform2d(self, x, y, center=(0.0, 0.0), angle: float = 0.0, degrees: bool = True):
+        """Rotate then translate points."""
+        theta = np.deg2rad(angle) if degrees else angle
+        c, s = np.cos(theta), np.sin(theta)
+        cx, cy = center
+        X = c * x - s * y + cx
+        Y = s * x + c * y + cy
+        return X, Y
+
+    def plot_superellipse2d(self, fig_num: int,
+                            a: float, b: float,
+                            p_x: float = 1.0, p_y: float = 1.0,
+                            center=(0.0, 0.0), angle: float = 0.0,
+                            num: int = 720, closed: bool = True, **plot_kwargs):
+        """
+        Draw a 2D superellipse on the Style canvas (one geometry).
+
+        Parameters
+        ----------
+        fig_num : int
+            Subfigure index (0-based, row-major). I.e. i=self.__cols, j=self.__rows.
+        a, b : float
+            Semi-axes before rotation.
+        p_x, p_y : float
+            Shape exponents along x and y (1.0 -> ellipse; <1 squarer; >1 diamond-like).
+        center : (cx, cy)
+            Center coordinates.
+        angle : float
+            Pose angle in degrees.
+        num : int
+            Number of samples on [0, 2π].
+        closed : bool
+            If True, repeat the first point to visually close the curve.
+        **plot_kwargs : passed to matplotlib.axes.Axes.plot
+            e.g., color, linewidth, linestyle, label, alpha, etc.
+        """
+        ax = self.axs[int(fig_num // self.__cols), int(fig_num % self.__cols)]
+        x, y = self.__superellipse2d_points(a, b, p_x, p_y, num)
+        X, Y = self.__transform2d(x, y, center=center, angle=angle, degrees=True)
+        if closed:
+            import numpy as _np
+            X = _np.r_[X, X[:1]]
+            Y = _np.r_[Y, Y[:1]]
+        line, = ax.plot(X, Y, **(plot_kwargs or {}))
+        # Keep aspect ratio square for correct geometry appearance
+        try:
+            ax.set_aspect('equal', adjustable='datalim')
+        except Exception:
+            pass
+        ax.margins(0.05, 0.05)
+        return line
+
+    def plot_superellipses2d(self, fig_num: int, geoms: list,
+                             equal_aspect: bool = True, margins: float = 0.05):
+        """
+        Draw multiple 2D superellipses on one subfigure (Axes).
+
+        Parameters
+        ----------
+        fig_num : int
+            Subfigure index (0-based, row-major).
+        geoms : list[dict]
+            Each dict can contain:
+                a, b, p_x (or px), p_y (or py), center=(cx,cy), angle (deg), num (int),
+                draw_kwargs=dict(...) -> forwarded to Axes.plot
+        equal_aspect : bool
+            If True, set equal aspect.
+        margins : float
+            Axes margins fraction for x and y.
+        """
+        ax = self.axs[int(fig_num // self.__cols), int(fig_num % self.__cols)]
+        artists = []
+        for g in geoms:
+            a = float(g.get('a', 1.0))
+            b = float(g.get('b', 1.0))
+            p_x = float(g.get('p_x', g.get('px', 1.0)))
+            p_y = float(g.get('p_y', g.get('py', 1.0)))
+            center = g.get('center', (0.0, 0.0))
+            angle = float(g.get('angle', 0.0))
+            num = int(g.get('num', 720))
+            draw_kwargs = g.get('draw_kwargs', {})
+            artists.append(
+                self.plot_superellipse2d(fig_num, a, b, p_x, p_y,
+                                         center=center, angle=angle,
+                                         num=num, **(draw_kwargs or {}))
+            )
+        if equal_aspect:
+            try:
+                ax.set_aspect('equal', adjustable='datalim')
+            except Exception:
+                pass
+        if margins is not None:
+            ax.margins(margins, margins)
+        return artists
