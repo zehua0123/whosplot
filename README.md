@@ -1,93 +1,262 @@
 # whosplot
 
+A lightweight, scientific-style plotting toolkit based on Matplotlib. 
+
+![](examples/GradientColor/gradientColorMultiSubfigure.svg)
+![](examples/MultiSubFigures1/multiSubfigure.svg)
+
+## Requirements
+
+- Python 3.8+
+- Matplotlib, NumPy (and Pillow if you manipulate image margins)
+- (Optional) TeX Live / MiKTeX when using LaTeX text
+
+---
+
+## How to install
+
+with the aid of setup.py
+> cd whosplot  
+> python -m pip install .
+
+---
+
+## How to use
+
+You typically **subclass `Run`** and then call one or more plotting methods.  
+Minimal example:
+
+```python
+
+from whosplot.run import Run
+
+class MyStyle(Run):
+    """
+    Inherit from `Run` to reuse:
+      - data/config loading
+      - style & layout initialization
+      - plotting APIs (two_d_subplots, color_gradient_two_d_subplots, etc.)
+      - utilities (save_fig, show, text, set_axis_off, ...)
+
+    Customize by:
+      - overriding __init__ to inject your own setup if needed
+      - adding convenience methods (e.g., `my_figure`) that call the base APIs
+    """
+    def __init__(self):
+        # Initialize the base class: reads config.ini, parses CSV, builds figure/axes.
+        super(MyStyle, self).__init__()
+
+    def my_figure(self):
+        """
+        Produce a 2D subplot figure using the current config/CSV and save/show it.
+        - The plot “kind” (plot/scatter/mix) is controlled by `figure_kind` in config.
+        - If using 'mix', `mixed_ylegend` selects which series are rendered as scatter.
+        """
+        # Draw all subplots according to the parsed CSV and your config settings.
+        self.two_d_subplots()
+
+        # Save the generated figure. (File name is derived from file_location)
+        self.save_fig(fig_format='pdf')
+
+        # Open the saved file using the OS default PDF viewer.
+        self.show(fig_format='pdf')
 
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+# Instantiate and run once.
+MyStyle = MyStyle()
+MyStyle.my_figure()
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/particlefoam/whosplot.git
-git branch -M main
-git push -uf origin main
+
+## Two "magic strings" in "whosplot"
+
+> These special tokens are parsed from the **CSV header row** and control how subfigures, series and labels are arranged.
+
+1) **`whos_plot`**  
+   In "whosplot", we often put legend on **Y** column in the header row. Then what we put on **X** column? It is **`whos_plot`**.
+
+2) **`::` (double colon)**  
+   Used **inside a header cell** to declare axis labels in one shot:  
+   `XLabel :: YLabel`  
+   - Left side -> x-axis label  
+   - Right side -> y-axis label
+
+   **`::`** is also the separator of each subfigure  
+   If we want to plot two subfigures in one frame, then we make header of CSV like this:  
+   `XLabel1 :: YLabel1, Legend1, whos_plot, Legend2, XLabel2 :: YLabel2, Legend3, whos_plot, Legend4`
+
+---
+
+## CSV data format
+
+Each **series** is represented by **two adjacent columns**: one **X** column and one **Y** column. A subplot may contain **one** or **many** series.
+
+### A) One X -> one Y (single series)
+
+Header row (two columns):
+```
+Time (s) :: Velocity (m/s), Velocity — baseline
+```
+- Column 1 header contains `XLabel :: YLabel` → x-label = “Time (s)”; y-label = “Velocity (m/s)”.  
+- Column 2 header is the **legend name** for this series.
+
+Data rows (example):
+```
+0.0, 0.00
+0.1, 0.23
+0.2, 0.46
 ```
 
-## Integrate with your tools
+### B) Multiple X -> multiple Y (multiple series in the same subplot)
 
-* [Set up project integrations](https://gitlab.com/particlefoam/whosplot/-/settings/integrations)
+Use **`whos_plot`** to bind the group:
 
-## Collaborate with your team
+- In the **first series** of that subplot, put **legend name in the Y header**.
+- In **every remaining series**, put **`whos_plot` in the X header**, and put the **legend name in the Y header**.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+> Note: If **Y** columns share one **X**, then other **X** columns can be omitted except the first **X** column.
 
-## Test and Deploy
+Example with two Y-series that share the same X:
 
-Use the built-in continuous integration in GitLab.
+Header row (four columns = two pairs):
+```
+Time (s) :: Velocity (m/s), Pressure — set A, whos_plot, Pressure — set B
+```
+Data rows (example):
+```
+0.0, 100100, 0.0, 101325
+0.1, 100200, 0.1, 101410
+0.2, 100300, 0.2, 101520
+```
+**Or**  
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Header row (three columns = two pairs):
+```
+Time (s) :: Velocity (m/s), Pressure — set A, Pressure — set B
+```
+Data rows (example):
+```
+0.0, 100100, 101325
+0.1, 100200, 101410
+0.2, 100300, 101520
+```
+Interpretation:
+- Pair 1 -> X header: `Time (s) :: Velocity (m/s)` (declares axis labels), Y header: `Pressure — set A` (legend text).  
+- Pair 2 -> X header: `whos_plot` (means: the second series’ X), Y header: `Pressure — set B` (the second legend text).
 
-***
+> Note: Avoid to use comma `, ` in CSV header.
 
-# Editing this README
+---
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Axis labels via `::`
 
-## Suggestions for a good README
+Wherever you write `XLabel :: YLabel` in a header cell, the framework reads
+- **left of `::`** -> **x-axis label**
+- **right of `::`** -> **y-axis label**
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+`::` also means the start of a subfigure.  
 
-## Name
-Choose a self-explaining name for your project.
+This is two subfigures in one frame:
+```
+X::Y, whos_plot, X::Y, whos_plot
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+This is three subfigures in one frame:
+```
+X::Y, whos_plot, X::Y, whos_plot, X::Y, whos_plot
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+---
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## TeX text rendering
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+If you want LaTeX styling in labels or tick labels:
+- **Install a TeX distribution** first.
+- Default option is using LaTex.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+---
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+## Plot kinds: `plot`, `scatter`, `mix`
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Choose the **kind** per subplot:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+- **`plot`** – draws **lines** (with optional markers).  
+- **`scatter`** – draws **markers only**.  
+- **`mix`** – draws a **hybrid** (e.g., lines with markers and/or per-series scatter) according to your style settings.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+---
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Minimal settings (config)
 
-## License
-For open source projects, say how it is licensed.
+Below is a compact, ready-to-adapt `config.ini` template.  
+**Outer brackets** correspond to the **figure/subplot list**; **inner brackets** are **per-subplot** options.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```ini
+[Default]
+
+file_location = data
+; Both absolute path and file name are accepted. Required!
+
+figure_kind = ['mix'] * 1
+; set as ['plot', 'scatter', 'mix', ...] ; Attention, only string type in list is readable. Required!
+; The length of the list is the same as figure number.
+
+y_label_type = ['linear'] * 1
+; ['linear', 'log', 'symlog', 'logit', 'function', ...], Default is linear.
+; Setting as y_label_type = None is also valid.
+
+x_label_type = ['linear'] * 1
+; Ditto. 
+
+y_ticklabel_format = ['plain'] * 1
+; ['plain', 'scientific', 'sci', ...], Default is plain.
+; Setting as y_label_type = None is also valid.
+
+x_ticklabel_format = ['plain'] * 1
+; Ditto. 
+
+side_ylabel = None
+; On the horizon ... ...
+
+mixed_ylegend = [[1]] * 1
+; Example: mixed_ylegend = [[x1, y1, y2, y3], [], [] ]
+; If markers and lines are plotted in the same figure, each subplot’s mixed_ylegend lists the indices of the series to render as scatter
+; the others are drawn as lines
+
+title = None
+; ['title1', 'title2', ...], Default is None.
+
+line_with_marker = [True] * 1
+; Whether to draw markers on lines for 'plot'/'mix'.
+
+legend_location = ['best'] * 1
+; ['best', 'upper right', 'upper left', 'lower left', 'lower right', ...], Default is 'best'.
+
+limited_label = [[0,5,0,5]] * 1
+; [[xmin, xmax, ymin, ymax], [......], ...], if xmin and xmax equals zero,
+; it will turn off the limitation of x-axis.
+
+color_map = ['viridis'] * 1
+; Perceptually Uniform Sequential: viridis, plasma, inferno, magma, cividis.
+
+figure_matrix = [1, 1]
+; Grid layout of subplots as [rows, cols]
+
+figure_size = [8, 6.5]
+; size in inches (width, height) of subfigure.
+
+multi_line_style = [['-','-','--','-.','-','-','-']] * 1
+; Per-subplot list of line styles.
+
+debug_mode = False
+```
+
+### Reading the bracketed settings
+- The **first pair of brackets** (e.g., `[...] * N`) controls how many **subplots** you have and assigns a value per subplot.
+- Any **nested bracket** inside corresponds to **that subplot’s internal list**, e.g. multiple line styles or mixed legends.
+
+---
+
+
+# Play with examples and enjoy!
