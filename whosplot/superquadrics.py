@@ -28,6 +28,47 @@ class SuperQuadrics:
         """
         return np.sign(x) * (np.abs(x) ** p)
 
+    def _superellipse(self, angle, exponent):
+        """Return a well-distributed parameterization of a superellipse.
+
+        ``sign(cos(t))*abs(cos(t))**exponent`` is the usual parameterization,
+        but it becomes extremely non-uniform when ``exponent`` is smaller than
+        one.  In that regime, the radial form below describes the same implicit
+        superellipse while using the polar angle directly.  This keeps
+        neighboring vertices at similar distances and avoids long, thin
+        surface patches.  The usual form is retained for exponents greater
+        than or equal to one so a finite grid still resolves their axis-aligned
+        cusps accurately.
+        """
+        exponent = float(exponent)
+        if not np.isfinite(exponent) or exponent <= 0.0:
+            raise ValueError("Superquadric exponents must be finite and positive")
+
+        angle = np.asarray(angle, dtype=float)
+        cosine, sine = np.cos(angle), np.sin(angle)
+        zero_tol = 8.0 * np.finfo(float).eps
+        cosine = np.where(np.abs(cosine) <= zero_tol, 0.0, cosine)
+        sine = np.where(np.abs(sine) <= zero_tol, 0.0, sine)
+
+        if exponent >= 1.0:
+            return self._spow(cosine, exponent), self._spow(sine, exponent)
+
+        abs_cosine, abs_sine = np.abs(cosine), np.abs(sine)
+        scale = np.maximum(abs_cosine, abs_sine)
+        power = 2.0 / exponent
+
+        # Factoring out ``scale`` avoids underflow for very small exponents.
+        # cos(angle) and sin(angle) cannot both be zero, so scale is positive.
+        if np.isinf(power):
+            radial_scale = np.ones_like(scale)
+        else:
+            radial_scale = (
+                (abs_cosine / scale) ** power
+                + (abs_sine / scale) ** power
+            ) ** (-1.0 / power)
+        radius = radial_scale / scale
+        return radius * cosine, radius * sine
+
     def _superellipsoid(self, p):
         """
         Parametric superellipsoid surface.
@@ -54,8 +95,8 @@ class SuperQuadrics:
         u = np.linspace(-0.5 * np.pi, 0.5 * np.pi, nu)
         v = np.linspace(-np.pi, np.pi, nv)
         U, V = np.meshgrid(u, v, indexing="ij")
-        Cu, Su = self._spow(np.cos(U), e1), self._spow(np.sin(U), e1)
-        Cv, Sv = self._spow(np.cos(V), e2), self._spow(np.sin(V), e2)
+        Cu, Su = self._superellipse(U, e1)
+        Cv, Sv = self._superellipse(V, e2)
         X = a1 * Cu * Cv
         Y = a2 * Cu * Sv
         Z = a3 * Su
@@ -91,8 +132,8 @@ class SuperQuadrics:
         u = np.linspace(-np.pi, np.pi, nu)
         v = np.linspace(-np.pi, np.pi, nv)
         U, V = np.meshgrid(u, v, indexing="ij")
-        Cu, Su = self._spow(np.cos(U), e2), self._spow(np.sin(U), e2)
-        Cv, Sv = self._spow(np.cos(V), e1), self._spow(np.sin(V), e1)
+        Cu, Su = self._superellipse(U, e2)
+        Cv, Sv = self._superellipse(V, e1)
         R = aM + am * Cv
         X = R * Cu
         Y = R * Su
@@ -130,7 +171,7 @@ class SuperQuadrics:
         U, V = np.meshgrid(u, v, indexing="ij")
         CH = (np.cosh(U)) ** e1
         SH = self._spow(np.sinh(U), e1)
-        Cv, Sv = self._spow(np.cos(V), e2), self._spow(np.sin(V), e2)
+        Cv, Sv = self._superellipse(V, e2)
         X = a1 * CH * Cv
         Y = a2 * CH * Sv
         Z = a3 * SH
@@ -167,7 +208,7 @@ class SuperQuadrics:
         U, V = np.meshgrid(u, v, indexing="ij")
         SH = (np.sinh(U)) ** e1
         CH = (np.cosh(U)) ** e1
-        Cv, Sv = self._spow(np.cos(V), e2), self._spow(np.sin(V), e2)
+        Cv, Sv = self._superellipse(V, e2)
         X = a1 * SH * Cv
         Y = a2 * SH * Sv
         Zp = a3 * CH
@@ -202,7 +243,7 @@ class SuperQuadrics:
         U, V = np.meshgrid(u, v, indexing="ij")
         R = U
         Zshape = U ** (2.0 / e1)
-        Cv, Sv = self._spow(np.cos(V), e2), self._spow(np.sin(V), e2)
+        Cv, Sv = self._superellipse(V, e2)
         X = a1 * R * Cv
         Y = a2 * R * Sv
         Z = a3 * Zshape
@@ -327,7 +368,8 @@ class SuperQuadrics:
                     rstride=1,
                     cstride=1,
                     linewidth=0,
-                    antialiased=True,
+                    edgecolor="none",
+                    antialiased=False,
                     shade=True,
                     cmap=self.h._Run__color_map[i],
                 )
@@ -338,7 +380,8 @@ class SuperQuadrics:
                     rstride=1,
                     cstride=1,
                     linewidth=0,
-                    antialiased=True,
+                    edgecolor="none",
+                    antialiased=False,
                     shade=True,
                     cmap=self.h._Run__color_map[i],
                 )
@@ -357,7 +400,8 @@ class SuperQuadrics:
                     rstride=1,
                     cstride=1,
                     linewidth=0,
-                    antialiased=True,
+                    edgecolor="none",
+                    antialiased=False,
                     shade=True,
                     cmap=self.h._Run__color_map[i],
                 )
